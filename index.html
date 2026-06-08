@@ -146,6 +146,13 @@
         .form-control { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(61, 43, 31, 0.15); background: rgba(255,255,255,0.6); font-size: 15px; font-family: inherit; box-sizing: border-box; outline: none;}
         .form-control:focus { border-color: var(--text-main); }
         .btn-submit-form { width: 100%; background: var(--text-main); color: #FFF; border: none; padding: 16px; border-radius: 14px; font-size: 15px; font-family: inherit; margin-top: 10px; font-weight: 500;}
+        .inline-edit-btn { border: 1px solid rgba(61,43,31,0.18); background: rgba(255,255,255,0.55); color: var(--text-main); border-radius: 10px; padding: 6px 10px; font-size: 11px; font-family: inherit; cursor: pointer; }
+        .danger-text-btn { border: none; background: transparent; color: var(--c-danger); font-size: 12px; font-family: inherit; cursor: pointer; }
+        .log-actions { display: flex; align-items: center; gap: 8px; }
+        .history-row-card { background: rgba(255,255,255,0.55); border: 1px solid rgba(61,43,31,0.06); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+        .history-row-card p { margin: 0 0 6px 0; font-size: 14px; font-weight: 500; }
+        .history-row-card .history-meta { display:flex; justify-content:space-between; color:var(--text-sub); font-size:11px; }
+        .cloud-status { white-space: nowrap; font-size: 10px; color: var(--text-sub); }
 
         /* 数字键盘 */
         .pin-container { display: flex; gap: 18px; margin: 10px auto 26px auto; }
@@ -192,6 +199,8 @@
             <span id="uiCurrentUserTitle">专属智管中台</span>
         </div>
         <div class="top-actions">
+            <button class="icon-btn" id="btnViewHistory" onclick="openHistorySheet()" style="display:none;">查看历史</button>
+            <button class="icon-btn" id="btnClearHistory" onclick="clearHistoricalLogs()" style="display:none;">清除历史</button>
             <button class="icon-btn" onclick="executeLogout()">解除绑定</button>
         </div>
     </div>
@@ -210,7 +219,8 @@
                 </div>
             </div>
             <div class="api-badge-bar">
-                <span>DeepSeek 网关 (留空用模拟器)</span>
+                <span>DeepSeek 网关</span>
+                <span class="cloud-status" id="cloudSyncStatus">云端：未连接</span>
                 <input type="password" id="inputApiKey" placeholder="sk-..." onchange="saveApiKeyToLocal(this.value)">
             </div>
         </div>
@@ -218,7 +228,7 @@
         <div class="action-pad" id="adminVoiceConsole">
             <div class="text-input-group">
                 <input type="text" id="aiTextInput" placeholder="打字或用键盘语音：如'A用了1支肉毒'">
-                <button class="btn-parse" onclick="triggerTextInputParsing()">解析过账</button>
+                <button class="btn-parse" onclick="triggerTextInputParsing()">AI解析并入账</button>
             </div>
             
             <button class="btn-recording" id="btnMicTrigger" onclick="toggleVoiceEngine()">🎙️ 网页原生语音采集 (易受iOS限制)</button>
@@ -256,6 +266,12 @@
     <div class="sheet-indicator"></div>
     <div class="sheet-headline"><span>借调与平账核心台账</span><span class="sheet-sub-count" id="lblDebtCount">共 0 笔</span></div>
     <div class="sheet-body-scroll" id="boxDebtDetails"></div>
+</div>
+
+<div class="bottom-sheet" id="historySheet">
+    <div class="sheet-indicator"></div>
+    <div class="sheet-headline"><span>历史记录</span><span class="sheet-sub-count" id="lblHistoryCount">共 0 条</span></div>
+    <div class="sheet-body-scroll" id="boxHistoryDetails"></div>
 </div>
 
 <div class="bottom-sheet" id="manualFormSheet">
@@ -298,9 +314,73 @@
     </div>
 </div>
 
+<div class="bottom-sheet" id="inventoryEditSheet">
+    <div class="sheet-indicator"></div>
+    <div class="sheet-headline"><span>修改资产归属 / 数量</span></div>
+    <div class="sheet-body-scroll">
+        <input type="hidden" id="editStockOriginalItem">
+        <input type="hidden" id="editStockOriginalOwner">
+        <div class="form-group">
+            <span class="form-label">物品名称</span>
+            <input type="text" class="form-control" id="editStockItem">
+        </div>
+        <div style="display:flex; gap:16px;">
+            <div class="form-group" style="flex:1;">
+                <span class="form-label">物权所属人</span>
+                <select class="form-control" id="editStockOwner">
+                    <option value="A">合伙人 A</option>
+                    <option value="B">合伙人 B</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex:1;">
+                <span class="form-label">数量</span>
+                <input type="number" class="form-control" id="editStockQty" min="0">
+            </div>
+        </div>
+        <button class="btn-submit-form" onclick="saveInventoryEdit()">保存修改</button>
+        <button class="danger-text-btn" onclick="deleteInventoryLine()" style="width:100%;padding:14px 0;margin-top:8px;">删除这一条资产记录</button>
+    </div>
+</div>
+
+<div class="bottom-sheet" id="logEditSheet">
+    <div class="sheet-indicator"></div>
+    <div class="sheet-headline"><span>修改每日记录</span></div>
+    <div class="sheet-body-scroll">
+        <input type="hidden" id="editLogDayIndex">
+        <input type="hidden" id="editLogRecordIndex">
+        <div class="form-group">
+            <span class="form-label">记录内容</span>
+            <input type="text" class="form-control" id="editLogMsg">
+        </div>
+        <div style="display:flex; gap:16px;">
+            <div class="form-group" style="flex:1;">
+                <span class="form-label">时间</span>
+                <input type="text" class="form-control" id="editLogClock">
+            </div>
+            <div class="form-group" style="flex:1;">
+                <span class="form-label">标记</span>
+                <input type="text" class="form-control" id="editLogMarker">
+            </div>
+        </div>
+        <button class="btn-submit-form" onclick="saveLogEdit()">保存记录</button>
+        <button class="danger-text-btn" onclick="deleteLogRecord()" style="width:100%;padding:14px 0;margin-top:8px;">删除这条记录</button>
+    </div>
+</div>
+
+<!-- CloudBase Web SDK V2：固定版本，避免 latest 升级导致不兼容 -->
+<script src="https://static.cloudbase.net/cloudbase-js-sdk/2.28.6/cloudbase.full.js"></script>
+
 <script>
     // --- A. 基础数据库结构 ---
-    let masterDatabase = {
+    // DeepSeek Key：测试自用可以写在这里；正式上线不建议把 Key 暴露在前端。
+    const DEFAULT_DEEPSEEK_API_KEY = ""; // 例如："sk-xxxxxxxx"
+
+    // CloudBase 云端存储配置
+    const CLOUD_ENV_ID = "aesthetic-keeper-d7e6sc24d14330f";
+    const CLOUD_COLLECTION = "app_state";
+    const CLOUD_DOC_ID = "802d73cb6a26787d00689629003c643e";
+
+    const defaultMasterDatabase = {
         stockLedger: [
             { spuName: "保妥适肉毒 (100u)", owner: "A", qty: 20 },
             { spuName: "保妥适肉毒 (100u)", owner: "B", qty: 25 },
@@ -323,13 +403,108 @@
         ]
     };
 
+    let masterDatabase = JSON.parse(localStorage.getItem('__aesthetic_keeper_db') || JSON.stringify(defaultMasterDatabase));
+    let cloudApp = null;
+    let cloudDb = null;
+    let cloudReady = false;
+
     let runtimeState = { activeRoleCode: null, targetWorkflowRole: null, accumulatedPin: "" };
 
+    function updateCloudSyncStatus(text, isError = false) {
+        const node = document.getElementById('cloudSyncStatus');
+        if (!node) return;
+        node.innerText = text;
+        node.style.color = isError ? 'var(--c-danger)' : 'var(--text-sub)';
+    }
+
+    function persistLocalDatabase() {
+        localStorage.setItem('__aesthetic_keeper_db', JSON.stringify(masterDatabase));
+    }
+
+    async function initCloudBase() {
+        updateCloudSyncStatus('云端：连接中...');
+        try {
+            if (!window.cloudbase) throw new Error('CloudBase SDK 未加载');
+            cloudApp = cloudbase.init({ env: CLOUD_ENV_ID });
+
+            // Web SDK 调用 CloudBase 能力前需要登录；这里使用匿名登录。
+            const auth = typeof cloudApp.auth === 'function' ? cloudApp.auth() : cloudApp.auth;
+            if (auth) {
+                try {
+                    let loginState = null;
+                    if (typeof auth.getLoginState === 'function') loginState = await auth.getLoginState();
+                    if (!loginState && typeof auth.signInAnonymously === 'function') await auth.signInAnonymously();
+                } catch (authErr) {
+                    console.warn('CloudBase 匿名登录失败，继续尝试数据库访问：', authErr);
+                }
+            }
+
+            cloudDb = cloudApp.database();
+            cloudReady = true;
+            updateCloudSyncStatus('云端：已连接');
+            return true;
+        } catch (err) {
+            console.error('CloudBase 初始化失败：', err);
+            cloudReady = false;
+            updateCloudSyncStatus('云端：连接失败', true);
+            return false;
+        }
+    }
+
+    async function loadCloudDatabase() {
+        if (!cloudReady || !cloudDb) return false;
+        try {
+            updateCloudSyncStatus('云端：读取中...');
+            const res = await cloudDb.collection(CLOUD_COLLECTION).doc(CLOUD_DOC_ID).get();
+            const doc = Array.isArray(res.data) ? res.data[0] : res.data;
+            if (doc && doc.data) {
+                masterDatabase = doc.data;
+                persistLocalDatabase();
+                updateCloudSyncStatus('云端：读取成功');
+                return true;
+            }
+            throw new Error('云端文档为空或格式不正确');
+        } catch (err) {
+            console.error('云端数据读取失败：', err);
+            updateCloudSyncStatus('云端：读取失败', true);
+            return false;
+        }
+    }
+
+    async function saveCloudDatabase() {
+        persistLocalDatabase();
+        if (!cloudReady || !cloudDb) {
+            updateCloudSyncStatus('云端：未连接，本机已保存', true);
+            return false;
+        }
+        try {
+            updateCloudSyncStatus('云端：保存中...');
+            const safeData = JSON.parse(JSON.stringify(masterDatabase));
+            await cloudDb.collection(CLOUD_COLLECTION).doc(CLOUD_DOC_ID).update({
+                data: safeData,
+                updatedAt: new Date().toISOString()
+            });
+            updateCloudSyncStatus('云端：已保存');
+            return true;
+        } catch (err) {
+            console.error('云端数据保存失败：', err);
+            updateCloudSyncStatus('云端：保存失败', true);
+            alert('云端保存失败。大概率是 app_state 权限不允许当前网页修改这条数据。\n\n请先继续看本机效果；如果要三个人同步，需要把集合权限放开，或改用云函数写入。');
+            return false;
+        }
+    }
+
     // --- B. 设备锁与初始化 ---
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
         const cachedRole = localStorage.getItem('__bound_role_code');
-        const cachedKey = localStorage.getItem('__deepseek_encrypted_key');
-        if(cachedKey) document.getElementById('inputApiKey').value = cachedKey;
+        const cachedKey = localStorage.getItem('__deepseek_encrypted_key') || DEFAULT_DEEPSEEK_API_KEY;
+        if(cachedKey) {
+            document.getElementById('inputApiKey').value = cachedKey;
+            localStorage.setItem('__deepseek_encrypted_key', cachedKey);
+        }
+
+        await initCloudBase();
+        await loadCloudDatabase();
 
         if (cachedRole) {
             runtimeState.activeRoleCode = cachedRole;
@@ -404,6 +579,7 @@
 
     // --- C. UI 渲染 ---
     function switchLayoutToDashboard(role) {
+        document.getElementById('loginView').classList.add('hidden');
         const dashView = document.getElementById('dashboardView');
         dashView.classList.remove('hidden');
 
@@ -411,10 +587,14 @@
             document.getElementById('uiCurrentUserName').innerText = "机构主理人 C";
             document.getElementById('uiCurrentUserTitle').innerText = "全盘战略管控网关";
             document.getElementById('adminVoiceConsole').style.display = 'block';
+            document.getElementById('btnViewHistory').style.display = 'inline-block';
+            document.getElementById('btnClearHistory').style.display = 'inline-block';
         } else {
             document.getElementById('uiCurrentUserName').innerText = "独立合伙人 " + role;
             document.getElementById('uiCurrentUserTitle').innerText = "隔离合伙人专属看板";
             document.getElementById('adminVoiceConsole').style.display = 'none';
+            document.getElementById('btnViewHistory').style.display = 'none';
+            document.getElementById('btnClearHistory').style.display = 'none';
         }
 
         let viewFilteredStockTotal = 0;
@@ -444,7 +624,10 @@
             if(accessibleRecords.length === 0) return;
             let blockHtml = `<div class="timeline-section"><div class="timeline-day-title">${dayGroup.dateGroup}</div>`;
             accessibleRecords.forEach(rec => {
-                blockHtml += `<div class="log-row-card"><div class="log-main-info"><p>${rec.msg}</p><span>${rec.clock}</span></div><div class="log-badge-value" style="color:${rec.css}">${rec.marker}</div></div>`;
+                const realIndex = dayGroup.records.indexOf(rec);
+                const dayIndex = masterDatabase.historicalLogs.indexOf(dayGroup);
+                const editBtn = role === 'C' ? `<button class="inline-edit-btn" onclick="openLogEdit(${dayIndex}, ${realIndex})">修改</button>` : "";
+                blockHtml += `<div class="log-row-card"><div class="log-main-info"><p>${rec.msg}</p><span>${rec.clock}</span></div><div class="log-actions"><div class="log-badge-value" style="color:${rec.css}">${rec.marker}</div>${editBtn}</div></div>`;
             });
             blockHtml += `</div>`;
             wrapper.innerHTML += blockHtml;
@@ -472,7 +655,8 @@
             let rowHtml = `<div class="nested-spu-block"><div class="spu-master-row" onclick="toggleSpuCollapseRow(this, ${idx})"><div class="spu-title" id="spuTitleNode-${idx}"><i>▶</i> ${spuName}</div><div class="spu-qty">${dataObj.total} 支</div></div><div class="sku-slave-box" id="spuSlaveNode-${idx}">`;
             
             dataObj.breakdown.forEach(sub => {
-                rowHtml += `<div class="sku-item-line"><span>物权人：<span class="owner-lbl-${sub.owner.toLowerCase()}">合伙人 ${sub.owner}</span></span><span class="spu-qty">${sub.qty} 支</span></div>`;
+                const editButton = role === 'C' ? `<button class="inline-edit-btn" onclick="openInventoryEdit('${encodeURIComponent(sub.spuName)}','${sub.owner}')">修改</button>` : "";
+                rowHtml += `<div class="sku-item-line"><span>物权人：<span class="owner-lbl-${sub.owner.toLowerCase()}">合伙人 ${sub.owner}</span></span><span style="display:flex;align-items:center;gap:8px;"><span class="spu-qty">${sub.qty} 支</span>${editButton}</span></div>`;
             });
             rowHtml += `</div></div>`;
             box.innerHTML += rowHtml;
@@ -498,17 +682,134 @@
         });
     }
 
-    function executeClearDebtWorkflow(debtId) {
+    async function executeClearDebtWorkflow(debtId) {
         if (confirm("确认该笔借调已完成实物平账核销吗？")) {
             masterDatabase.borrowLedger = masterDatabase.borrowLedger.filter(d => d.id !== debtId);
+            ensureTodayLogGroup();
             masterDatabase.historicalLogs[0].records.unshift({ msg: "主理人 C 确权核销了一笔借调账目", clock: "刚刚", marker: "核销完毕", css: "var(--c-success)" });
+            await saveCloudDatabase();
             dismissAllSheets();
             switchLayoutToDashboard(runtimeState.activeRoleCode);
         }
     }
 
+
+    function ensureTodayLogGroup() {
+        if (!masterDatabase.historicalLogs || !Array.isArray(masterDatabase.historicalLogs)) masterDatabase.historicalLogs = [];
+        if (masterDatabase.historicalLogs.length === 0) {
+            masterDatabase.historicalLogs.unshift({ dateGroup: new Date().toLocaleDateString('zh-CN') + ' (今日)', records: [] });
+        }
+        if (!Array.isArray(masterDatabase.historicalLogs[0].records)) masterDatabase.historicalLogs[0].records = [];
+    }
+
+    function openInventoryEdit(encodedItem, owner) {
+        const itemName = decodeURIComponent(encodedItem);
+        const target = masterDatabase.stockLedger.find(s => s.spuName === itemName && s.owner === owner);
+        if (!target) return alert('未找到这条资产记录');
+        document.getElementById('editStockOriginalItem').value = itemName;
+        document.getElementById('editStockOriginalOwner').value = owner;
+        document.getElementById('editStockItem').value = target.spuName;
+        document.getElementById('editStockOwner').value = target.owner;
+        document.getElementById('editStockQty').value = target.qty;
+        toggleBottomSheet('inventoryEditSheet', true);
+    }
+
+    async function saveInventoryEdit() {
+        const oldItem = document.getElementById('editStockOriginalItem').value;
+        const oldOwner = document.getElementById('editStockOriginalOwner').value;
+        const newItem = document.getElementById('editStockItem').value.trim();
+        const newOwner = document.getElementById('editStockOwner').value;
+        const newQty = parseInt(document.getElementById('editStockQty').value);
+        if (!newItem || isNaN(newQty) || newQty < 0) return alert('请填写有效的物品名称和数量');
+
+        const target = masterDatabase.stockLedger.find(s => s.spuName === oldItem && s.owner === oldOwner);
+        if (!target) return alert('原资产记录不存在');
+
+        target.spuName = newItem;
+        target.owner = newOwner;
+        target.qty = newQty;
+        ensureTodayLogGroup();
+        masterDatabase.historicalLogs[0].records.unshift({ msg: `手动修改资产 (${oldOwner}/${oldItem} → ${newOwner}/${newItem})`, clock: "刚刚", marker: `${newQty} 支`, css: "var(--accent)" });
+        await saveCloudDatabase();
+        dismissAllSheets();
+        switchLayoutToDashboard(runtimeState.activeRoleCode);
+    }
+
+    async function deleteInventoryLine() {
+        const oldItem = document.getElementById('editStockOriginalItem').value;
+        const oldOwner = document.getElementById('editStockOriginalOwner').value;
+        if (!confirm('确认删除这条资产记录吗？')) return;
+        masterDatabase.stockLedger = masterDatabase.stockLedger.filter(s => !(s.spuName === oldItem && s.owner === oldOwner));
+        ensureTodayLogGroup();
+        masterDatabase.historicalLogs[0].records.unshift({ msg: `删除资产记录 (${oldOwner}/${oldItem})`, clock: "刚刚", marker: "已删除", css: "var(--c-danger)" });
+        await saveCloudDatabase();
+        dismissAllSheets();
+        switchLayoutToDashboard(runtimeState.activeRoleCode);
+    }
+
+    function openLogEdit(dayIndex, recordIndex) {
+        const rec = masterDatabase.historicalLogs[dayIndex].records[recordIndex];
+        document.getElementById('editLogDayIndex').value = dayIndex;
+        document.getElementById('editLogRecordIndex').value = recordIndex;
+        document.getElementById('editLogMsg').value = rec.msg;
+        document.getElementById('editLogClock').value = rec.clock;
+        document.getElementById('editLogMarker').value = rec.marker;
+        toggleBottomSheet('logEditSheet', true);
+    }
+
+    async function saveLogEdit() {
+        const dayIndex = parseInt(document.getElementById('editLogDayIndex').value);
+        const recordIndex = parseInt(document.getElementById('editLogRecordIndex').value);
+        const rec = masterDatabase.historicalLogs[dayIndex].records[recordIndex];
+        rec.msg = document.getElementById('editLogMsg').value.trim();
+        rec.clock = document.getElementById('editLogClock').value.trim();
+        rec.marker = document.getElementById('editLogMarker').value.trim();
+        await saveCloudDatabase();
+        dismissAllSheets();
+        switchLayoutToDashboard(runtimeState.activeRoleCode);
+    }
+
+    async function deleteLogRecord() {
+        const dayIndex = parseInt(document.getElementById('editLogDayIndex').value);
+        const recordIndex = parseInt(document.getElementById('editLogRecordIndex').value);
+        if (!confirm('确认删除这条每日记录吗？')) return;
+        masterDatabase.historicalLogs[dayIndex].records.splice(recordIndex, 1);
+        await saveCloudDatabase();
+        dismissAllSheets();
+        switchLayoutToDashboard(runtimeState.activeRoleCode);
+    }
+
+    function openHistorySheet() {
+        const box = document.getElementById('boxHistoryDetails');
+        const countNode = document.getElementById('lblHistoryCount');
+        if (!box || !countNode) return;
+        box.innerHTML = '';
+        let total = 0;
+        (masterDatabase.historicalLogs || []).forEach((dayGroup, dayIndex) => {
+            const records = dayGroup.records || [];
+            if (records.length === 0) return;
+            box.innerHTML += `<div class="timeline-day-title">${dayGroup.dateGroup || '未分组日期'}</div>`;
+            records.forEach((rec, recordIndex) => {
+                total += 1;
+                const editBtn = runtimeState.activeRoleCode === 'C' ? `<button class="inline-edit-btn" onclick="dismissAllSheets();openLogEdit(${dayIndex}, ${recordIndex})">修改</button>` : '';
+                box.innerHTML += `<div class="history-row-card"><p>${rec.msg || ''}</p><div class="history-meta"><span>${rec.clock || ''}</span><span style="color:${rec.css || 'var(--text-sub)'}">${rec.marker || ''}</span></div><div style="text-align:right;margin-top:8px;">${editBtn}</div></div>`;
+            });
+        });
+        if (total === 0) box.innerHTML = '<div style="color:var(--text-sub);font-size:13px;padding:20px 4px;">暂无历史记录。</div>';
+        countNode.innerText = `共 ${total} 条`;
+        toggleBottomSheet('historySheet', true);
+    }
+
+    async function clearHistoricalLogs() {
+        if (runtimeState.activeRoleCode !== 'C') return alert('只有机构主理人 C 可以清除历史数据');
+        if (!confirm('确认清空全部历史记录吗？库存和借调台账不会被删除。')) return;
+        masterDatabase.historicalLogs = [{ dateGroup: new Date().toLocaleDateString('zh-CN') + ' (今日)', records: [] }];
+        await saveCloudDatabase();
+        switchLayoutToDashboard(runtimeState.activeRoleCode);
+    }
+
     // --- D. 纯手动操作核心逻辑 ---
-    function executeManualFormSubmit() {
+    async function executeManualFormSubmit() {
         const action = document.getElementById('formAction').value;
         const item = document.getElementById('formItem').value;
         const count = parseInt(document.getElementById('formCount').value);
@@ -522,6 +823,7 @@
         const confirmMsg = `请最后核对您的手动操作：\n\n动作：${action}\n物权所属：合伙人 ${owner}\n物品名称：${item}\n数量：${count} 支\n\n是否立即写入数据库？`;
         
         if(confirm(confirmMsg)) {
+            ensureTodayLogGroup();
             let target = masterDatabase.stockLedger.find(s => s.spuName === item && s.owner === owner);
 
             if (action === "修正") {
@@ -546,6 +848,7 @@
                 masterDatabase.historicalLogs[0].records.unshift({ msg: `手工录入借调 (${borrower} 借用 ${owner} 的 ${item})`, clock: "刚刚", marker: "借调发生", css: "var(--c-danger)" });
             }
 
+            await saveCloudDatabase();
             dismissAllSheets();
             switchLayoutToDashboard(runtimeState.activeRoleCode);
             // 清空表单以便下次使用
@@ -562,7 +865,7 @@
         
         document.querySelector('.btn-parse').innerText = "处理中...";
         await processSemanticParsing(text);
-        document.querySelector('.btn-parse').innerText = "解析过账";
+        document.querySelector('.btn-parse').innerText = "AI解析并入账";
         document.getElementById('aiTextInput').value = ""; // 清空输入框
     }
 
@@ -626,10 +929,11 @@
         executeLedgerCommitWorkflow(parsedJson, rawText);
     }
 
-    function executeLedgerCommitWorkflow(jsonObj, originalText) {
+    async function executeLedgerCommitWorkflow(jsonObj, originalText) {
         const dialog = `【AI 智能语义分析结果】\n输入内容："${originalText}"\n\n· 动作: ${jsonObj.action}\n· 物品: ${jsonObj.item}\n· 数量: ${jsonObj.count} 支\n· 归属: 合伙人 ${jsonObj.owner}\n\n确认将其写入数据库吗？`;
         
         if (confirm(dialog)) {
+            ensureTodayLogGroup();
             if (jsonObj.action === "入库") {
                 let target = masterDatabase.stockLedger.find(s => s.spuName === jsonObj.item && s.owner === jsonObj.owner);
                 if (target) target.qty += jsonObj.count;
@@ -649,6 +953,7 @@
                 masterDatabase.borrowLedger.push({ id: Date.now(), debtor: borrower, creditor: lender, item: jsonObj.item, qty: jsonObj.count, timestamp: "刚刚" });
                 masterDatabase.historicalLogs[0].records.unshift({ msg: `跨账户借调 (${borrower} 借用 ${lender}：${jsonObj.item})`, clock: "刚刚", marker: "借调发生", css: "var(--c-danger)" });
             }
+            await saveCloudDatabase();
             switchLayoutToDashboard(runtimeState.activeRoleCode);
             alert("AI流转确权成功！");
         }
