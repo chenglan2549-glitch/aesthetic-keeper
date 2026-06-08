@@ -83,10 +83,20 @@
         .api-badge-bar { margin-top: 2vh; background: rgba(255,255,255,0.3); border-radius: 12px; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-sub); }
         .api-badge-bar input { border: none; background: transparent; color: var(--text-main); text-align: right; font-family: monospace; width: 60%; outline: none;}
 
-        .action-pad { margin-top: 3vh; display: none; }
-        .btn-recording { width: 100%; background: var(--text-main); color: #FFF; border: none; border-radius: 18px; padding: 18px 0; font-size: 15px; font-family: inherit; letter-spacing: 2px; font-weight: 500; box-shadow: 0 10px 25px rgba(61, 43, 31, 0.15); transition: all 0.2s;}
-        .btn-recording:active { transform: scale(0.98); opacity: 0.9; }
+        /* 新增：多模态录入控制台 */
+        .action-pad { margin-top: 3vh; display: none; background: rgba(255,255,255,0.3); border-radius: 20px; padding: 16px; border: 1px solid var(--glass-border); }
+        
+        .text-input-group { display: flex; gap: 10px; margin-bottom: 14px; }
+        .text-input-group input { flex-grow: 1; padding: 12px 16px; border-radius: 14px; border: 1px solid rgba(61, 43, 31, 0.15); background: rgba(255,255,255,0.8); font-size: 14px; outline: none; font-family: inherit; }
+        .text-input-group input:focus { border-color: var(--accent); }
+        .btn-parse { background: var(--text-main); color: #FFF; border: none; border-radius: 14px; padding: 0 18px; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; transition: 0.2s;}
+        .btn-parse:active { transform: scale(0.95); }
 
+        .btn-recording { width: 100%; background: transparent; color: var(--text-main); border: 1px solid var(--text-main); border-radius: 14px; padding: 12px 0; font-size: 14px; font-family: inherit; font-weight: 500; transition: all 0.2s; margin-bottom: 10px;}
+        .btn-recording:active { background: rgba(61,43,31,0.05); }
+
+        .btn-manual-form { width: 100%; background: var(--glass-bg); color: var(--text-sub); border: 1px dashed var(--text-sub); border-radius: 14px; padding: 12px 0; font-size: 13px; font-family: inherit; transition: all 0.2s;}
+        
         .timeline-section { margin-top: 4vh; }
         .timeline-day-title { font-size: 12px; color: var(--text-sub); font-weight: 600; margin-bottom: 14px; letter-spacing: 1px; display: flex; align-items: center;}
         .timeline-day-title::after { content: ""; flex-grow: 1; height: 1px; background: rgba(140, 115, 101, 0.15); margin-left: 14px;}
@@ -96,7 +106,7 @@
         .log-main-info span { font-size: 11px; color: var(--text-sub); font-family: -apple-system, sans-serif; }
         .log-badge-value { font-size: 16px; font-weight: 600; font-family: -apple-system, sans-serif; }
 
-        /* ==================== 4. 通用模态弹窗系统 (Bottom Sheet) ==================== */
+        /* ==================== 4. 通用模态弹窗系统 ==================== */
         .backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.35); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 99; opacity: 0; visibility: hidden; transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
         .backdrop.active { opacity: 1; visibility: visible; }
         
@@ -105,8 +115,9 @@
         .sheet-indicator { width: 42px; height: 4px; border-radius: 2px; background: rgba(61, 43, 31, 0.15); margin: 0 auto 22px auto; }
         .sheet-headline { font-size: 18px; margin-bottom: 22px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;}
         .sheet-sub-count { color: var(--text-sub); font-weight: normal; font-size: 13px; }
-        .sheet-body-scroll { overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; }
+        .sheet-body-scroll { overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; padding-bottom: 20px;}
 
+        /* 库存与借款列表样式 */
         .nested-spu-block { border-bottom: 1px solid rgba(61, 43, 31, 0.08); padding: 16px 0; }
         .nested-spu-block:last-child { border-bottom: none; }
         .spu-master-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
@@ -129,6 +140,14 @@
         .debt-right-action { display: flex; align-items: center; gap: 10px; }
         .btn-action-sm { background: var(--text-main); color: #FFF; border: none; padding: 6px 14px; border-radius: 10px; font-size: 11px; font-family: inherit; cursor: pointer;}
         
+        /* 纯手动表单样式 */
+        .form-group { margin-bottom: 16px; }
+        .form-label { font-size: 12px; color: var(--text-sub); margin-bottom: 6px; display: block; }
+        .form-control { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(61, 43, 31, 0.15); background: rgba(255,255,255,0.6); font-size: 15px; font-family: inherit; box-sizing: border-box; outline: none;}
+        .form-control:focus { border-color: var(--text-main); }
+        .btn-submit-form { width: 100%; background: var(--text-main); color: #FFF; border: none; padding: 16px; border-radius: 14px; font-size: 15px; font-family: inherit; margin-top: 10px; font-weight: 500;}
+
+        /* 数字键盘 */
         .pin-container { display: flex; gap: 18px; margin: 10px auto 26px auto; }
         .pin-bubble { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--text-main); transition: all 0.15s; }
         .pin-bubble.filled { background: var(--text-main); }
@@ -164,9 +183,6 @@
             <div class="card-body">独立看板。查验自持药耗留存，发起与 A 端实时跨账户对账。</div>
         </div>
     </div>
-    <div class="footer" style="position: absolute; bottom: 3vh; left: 0; width: 100vw; text-align: center; font-size: 11px; color: var(--text-sub); letter-spacing: 4px;">
-        秩序之美 · 了然于心
-    </div>
 </div>
 
 <div id="dashboardView" class="view-stage hidden">
@@ -194,13 +210,20 @@
                 </div>
             </div>
             <div class="api-badge-bar">
-                <span>DeepSeek 额度控制网关</span>
-                <input type="password" id="inputApiKey" placeholder="填入sk-秘钥(留空为模拟)" onchange="saveApiKeyToLocal(this.value)">
+                <span>DeepSeek 网关 (留空用模拟器)</span>
+                <input type="password" id="inputApiKey" placeholder="sk-..." onchange="saveApiKeyToLocal(this.value)">
             </div>
         </div>
 
         <div class="action-pad" id="adminVoiceConsole">
-            <button class="btn-recording" id="btnMicTrigger" onclick="toggleVoiceEngine()">🎙️ 点击说话并自动流水过账</button>
+            <div class="text-input-group">
+                <input type="text" id="aiTextInput" placeholder="打字或用键盘语音：如'A用了1支肉毒'">
+                <button class="btn-parse" onclick="triggerTextInputParsing()">解析过账</button>
+            </div>
+            
+            <button class="btn-recording" id="btnMicTrigger" onclick="toggleVoiceEngine()">🎙️ 网页原生语音采集 (易受iOS限制)</button>
+
+            <button class="btn-manual-form" onclick="toggleBottomSheet('manualFormSheet', true)">✏️ 纯手动记账 / 强制库存修正台</button>
         </div>
 
         <div id="timelineLogsWrapper"></div>
@@ -235,6 +258,46 @@
     <div class="sheet-body-scroll" id="boxDebtDetails"></div>
 </div>
 
+<div class="bottom-sheet" id="manualFormSheet">
+    <div class="sheet-indicator"></div>
+    <div class="sheet-headline"><span>纯手动过账/修正面板</span></div>
+    <div class="sheet-body-scroll">
+        <div class="form-group">
+            <span class="form-label">操作类型 (动作)</span>
+            <select class="form-control" id="formAction">
+                <option value="入库">📥 物资到货入库 (增加库存)</option>
+                <option value="消耗">💊 顾客日常消耗 (扣减库存)</option>
+                <option value="借调">🔄 内部跨账户借调 (产生欠条)</option>
+                <option value="修正">⚙️ 强制盘点修正 (直接覆盖库存数字)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <span class="form-label">物品名称 (允许手填新物品)</span>
+            <input type="text" class="form-control" id="formItem" placeholder="例如：保妥适肉毒 / 瑞蓝2号" list="itemList">
+            <datalist id="itemList">
+                <option value="保妥适肉毒 (100u)"></option>
+                <option value="瑞蓝2号玻尿酸"></option>
+                <option value="嗨体1.5ml植物水光"></option>
+                <option value="乔雅登丰颜升级版"></option>
+            </datalist>
+        </div>
+        <div style="display:flex; gap:16px;">
+            <div class="form-group" style="flex:1;">
+                <span class="form-label">数量 (支/盒)</span>
+                <input type="number" class="form-control" id="formCount" placeholder="填入数字" value="1">
+            </div>
+            <div class="form-group" style="flex:1;">
+                <span class="form-label">物权所属人</span>
+                <select class="form-control" id="formOwner">
+                    <option value="A">合伙人 A</option>
+                    <option value="B">合伙人 B</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn-submit-form" onclick="executeManualFormSubmit()">确 认 执 行</button>
+    </div>
+</div>
+
 <script>
     // --- A. 基础数据库结构 ---
     let masterDatabase = {
@@ -256,20 +319,13 @@
                     { msg: "合伙人 B 借用 A 物资 (保妥适肉毒)", clock: "14:00", marker: "借调发生", css: "var(--c-danger)" },
                     { msg: "日常消耗过账 (A 专属顾客张女士)", clock: "10:30", marker: "-1 支", css: "var(--text-sub)" }
                 ]
-            },
-            {
-                dateGroup: "2026年06月07日 (昨日)",
-                records: [
-                    { msg: "到货扫码确认 (B 采买瑞蓝2号入库)", clock: "16:00", marker: "+50 支", css: "var(--c-success)" },
-                    { msg: "合伙人 A 借用 B 物资 (乔雅登丰颜)", clock: "09:30", marker: "借调发生", css: "var(--c-danger)" }
-                ]
             }
         ]
     };
 
-    let runtimeState = { activeRoleCode: null, targetWorkflowRole: null, accumulatedPin: "", speechEngine: null };
+    let runtimeState = { activeRoleCode: null, targetWorkflowRole: null, accumulatedPin: "" };
 
-    // --- B. 设备锁状态感知 ---
+    // --- B. 设备锁与初始化 ---
     window.addEventListener('DOMContentLoaded', () => {
         const cachedRole = localStorage.getItem('__bound_role_code');
         const cachedKey = localStorage.getItem('__deepseek_encrypted_key');
@@ -318,7 +374,6 @@
         let matchedCode = null;
         const pin = runtimeState.accumulatedPin;
         const target = runtimeState.targetWorkflowRole;
-
         if (target.includes("合伙人 A") && pin === "1111") matchedCode = 'A';
         else if (target.includes("合伙人 B") && pin === "2222") matchedCode = 'B';
         else if (target.includes("机构主理人") && pin === "3333") matchedCode = 'C';
@@ -347,7 +402,7 @@
 
     function saveApiKeyToLocal(val) { localStorage.setItem('__deepseek_encrypted_key', val); }
 
-    // --- C. 千人千面数据渲染 ---
+    // --- C. UI 渲染 ---
     function switchLayoutToDashboard(role) {
         const dashView = document.getElementById('dashboardView');
         dashView.classList.remove('hidden');
@@ -379,7 +434,6 @@
     function renderTimelineLogs(role) {
         const wrapper = document.getElementById('timelineLogsWrapper');
         wrapper.innerHTML = "";
-
         masterDatabase.historicalLogs.forEach(dayGroup => {
             let accessibleRecords = dayGroup.records.filter(rec => {
                 if(role === 'C') return true;
@@ -387,9 +441,7 @@
                 if(role === 'B' && rec.msg.includes("A 专属")) return false;
                 return true;
             });
-
             if(accessibleRecords.length === 0) return;
-
             let blockHtml = `<div class="timeline-section"><div class="timeline-day-title">${dayGroup.dateGroup}</div>`;
             accessibleRecords.forEach(rec => {
                 blockHtml += `<div class="log-row-card"><div class="log-main-info"><p>${rec.msg}</p><span>${rec.clock}</span></div><div class="log-badge-value" style="color:${rec.css}">${rec.marker}</div></div>`;
@@ -399,7 +451,6 @@
         });
     }
 
-    // --- D. 数据下钻（Drill-down） ---
     function buildInventoryDrilldownDOM(role) {
         const box = document.getElementById('boxInventoryDetails');
         box.innerHTML = "";
@@ -442,55 +493,104 @@
         document.getElementById('lblDebtCount').innerText = `共 ${accessibleDebts.length} 笔挂账`;
 
         accessibleDebts.forEach(debt => {
-            let actionBtnHtml = (role === 'C') ? `<button class="btn-primary btn-action-sm" style="background:var(--c-success)" onclick="executeClearDebtWorkflow(${debt.id})">确认核销平账</button>` : `<button class="btn-primary btn-action-sm" onclick="alert('对账申请已通过站内信红点上报主理人C，等待主理人最终点击平账确认。')">发起平账</button>`;
+            let actionBtnHtml = (role === 'C') ? `<button class="btn-primary btn-action-sm" style="background:var(--c-success)" onclick="executeClearDebtWorkflow(${debt.id})">核销</button>` : `<button class="btn-primary btn-action-sm" onclick="alert('已提醒C端核销。')">发起平账</button>`;
             box.innerHTML += `<div class="debt-row-card"><div><div class="debt-main-title">${debt.debtor} <span style="color:var(--c-danger);margin:0 2px;">欠</span> ${debt.creditor}</div><div class="debt-sub-info">${debt.timestamp} · 借调物资：${debt.item}</div></div><div class="debt-right-action"><span class="spu-qty" style="color:var(--c-danger)">${debt.qty}支</span>${actionBtnHtml}</div></div>`;
         });
     }
 
     function executeClearDebtWorkflow(debtId) {
-        if (confirm("您在现实中已确认该两名合伙人完成资产/现金交割，准许核销平账吗？")) {
+        if (confirm("确认该笔借调已完成实物平账核销吗？")) {
             masterDatabase.borrowLedger = masterDatabase.borrowLedger.filter(d => d.id !== debtId);
-            masterDatabase.historicalLogs[0].records.unshift({ msg: "主理人 C 点击确权核销了一笔跨账户借调账目", clock: "刚刚", marker: "账目平反", css: "var(--c-success)" });
+            masterDatabase.historicalLogs[0].records.unshift({ msg: "主理人 C 确权核销了一笔借调账目", clock: "刚刚", marker: "核销完毕", css: "var(--c-success)" });
             dismissAllSheets();
             switchLayoutToDashboard(runtimeState.activeRoleCode);
         }
     }
 
-    // --- E. 原生ASR语音识别 + DeepSeek API ---
+    // --- D. 纯手动操作核心逻辑 ---
+    function executeManualFormSubmit() {
+        const action = document.getElementById('formAction').value;
+        const item = document.getElementById('formItem').value;
+        const count = parseInt(document.getElementById('formCount').value);
+        const owner = document.getElementById('formOwner').value;
+
+        if(!item || isNaN(count) || count < 0) {
+            alert("请完整填写物品名称并确保数量有效！");
+            return;
+        }
+
+        const confirmMsg = `请最后核对您的手动操作：\n\n动作：${action}\n物权所属：合伙人 ${owner}\n物品名称：${item}\n数量：${count} 支\n\n是否立即写入数据库？`;
+        
+        if(confirm(confirmMsg)) {
+            let target = masterDatabase.stockLedger.find(s => s.spuName === item && s.owner === owner);
+
+            if (action === "修正") {
+                // 直接强制覆盖
+                if (target) target.qty = count;
+                else masterDatabase.stockLedger.push({ spuName: item, owner: owner, qty: count });
+                masterDatabase.historicalLogs[0].records.unshift({ msg: `手动盘点修正 (${owner} 的 ${item} 更新为 ${count}支)`, clock: "刚刚", marker: "人工覆盖", css: "var(--accent)" });
+            } 
+            else if (action === "入库") {
+                if (target) target.qty += count;
+                else masterDatabase.stockLedger.push({ spuName: item, owner: owner, qty: count });
+                masterDatabase.historicalLogs[0].records.unshift({ msg: `手工录入到货 (${owner} 采买 ${item})`, clock: "刚刚", marker: `+${count} 支`, css: "var(--c-success)" });
+            }
+            else if (action === "消耗") {
+                if (target) target.qty = Math.max(0, target.qty - count);
+                masterDatabase.historicalLogs[0].records.unshift({ msg: `手工录入消耗 (${owner} 的顾客使用)`, clock: "刚刚", marker: `-${count} 支`, css: "var(--text-sub)" });
+            }
+            else if (action === "借调") {
+                let borrower = owner === 'A' ? 'B' : 'A';
+                if (target) target.qty = Math.max(0, target.qty - count);
+                masterDatabase.borrowLedger.push({ id: Date.now(), debtor: borrower, creditor: owner, item: item, qty: count, timestamp: "刚刚" });
+                masterDatabase.historicalLogs[0].records.unshift({ msg: `手工录入借调 (${borrower} 借用 ${owner} 的 ${item})`, clock: "刚刚", marker: "借调发生", css: "var(--c-danger)" });
+            }
+
+            dismissAllSheets();
+            switchLayoutToDashboard(runtimeState.activeRoleCode);
+            // 清空表单以便下次使用
+            document.getElementById('formItem').value = ""; 
+            document.getElementById('formCount').value = "1";
+            alert("手动操作执行成功！");
+        }
+    }
+
+    // --- E. AI 混合识别引流 (文本框 + 网页语音 API) ---
+    async function triggerTextInputParsing() {
+        const text = document.getElementById('aiTextInput').value;
+        if (!text) { alert("请先在文本框输入或使用键盘语音录入内容！"); return; }
+        
+        document.querySelector('.btn-parse').innerText = "处理中...";
+        await processSemanticParsing(text);
+        document.querySelector('.btn-parse').innerText = "解析过账";
+        document.getElementById('aiTextInput').value = ""; // 清空输入框
+    }
+
     function toggleVoiceEngine() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            alert("当前设备环境不支持原生语音API，为您切入【快捷智能模拟解析流】");
-            triggerMockSpeechWorkflow();
+            alert("由于苹果iOS系统限制，当前浏览器阻止了网页调用麦克风。\n\n💡 建议：请直接点击上方的【文本输入框】，利用您的手机输入法自带的“麦克风”图标进行语音转文字，效果更好！");
             return;
         }
 
         const btn = document.getElementById('btnMicTrigger');
         const recognition = new SpeechRecognition();
-        recognition.lang = 'zh-CN';
-        recognition.interimResults = false;
+        recognition.lang = 'zh-CN'; recognition.interimResults = false;
 
-        recognition.onstart = () => { btn.innerText = "🔊 正在聆听录音中，请口述操作..."; btn.style.background = "var(--c-danger)"; };
-        recognition.onerror = (e) => { console.error(e); alert("麦克风捕获异常，自动降级至模拟解析"); triggerMockSpeechWorkflow(); };
-        recognition.onspeechend = () => { recognition.stop(); btn.innerText = "⏳ 录音捕获完成，AI正在语义识别过账..."; btn.style.background = "var(--accent)"; };
+        recognition.onstart = () => { btn.innerText = "🔊 正在聆听..."; btn.style.background = "rgba(183, 110, 102, 0.2)"; };
+        recognition.onerror = (e) => { 
+            console.error(e); 
+            alert("捕获异常！苹果系统可能阻断了请求，请使用上方的【文本框+苹果键盘语音】。"); 
+            btn.innerText = "🎙️ 网页原生语音采集 (易受iOS限制)"; btn.style.background = "transparent";
+        };
+        recognition.onspeechend = () => { recognition.stop(); btn.innerText = "⏳ 录音完成，解析中..."; };
 
         recognition.onresult = async (event) => {
             const speechText = event.results[0][0].transcript;
             await processSemanticParsing(speechText);
+            btn.innerText = "🎙️ 网页原生语音采集 (易受iOS限制)"; btn.style.background = "transparent";
         };
         recognition.start();
-    }
-
-    async function triggerMockSpeechWorkflow() {
-        const mockPhrases = ["快递过来了是B的药增加了50支瑞蓝玻尿酸", "今天A的顾客来了用了一支A自己的水光针", "今天B来了没货拿了A的一支肉毒"];
-        const selectedText = prompt("模拟录入输入（或直接按确定体验预设大白话）：", mockPhrases[Math.floor(Math.random() * mockPhrases.length)]);
-        if(selectedText) { await processSemanticParsing(selectedText); } else { resetMicBtnUi(); }
-    }
-
-    function resetMicBtnUi() {
-        const btn = document.getElementById('btnMicTrigger');
-        btn.innerText = "🎙️ 点击说话并自动流水过账";
-        btn.style.background = "var(--text-main)";
     }
 
     async function processSemanticParsing(rawText) {
@@ -523,24 +623,23 @@
             if(numMatch) parsedJson.count = parseInt(numMatch[0]);
         }
 
-        resetMicBtnUi();
-        executeLedgerCommitWorkflow(parsedJson, rawText); // FIX: 修复了致命空格错误
+        executeLedgerCommitWorkflow(parsedJson, rawText);
     }
 
     function executeLedgerCommitWorkflow(jsonObj, originalText) {
-        const dialog = `【AI 智能语义对账网关判定】\n原始音频："${originalText}"\n\n提取分类要素：\n· 操作动作: ${jsonObj.action}\n· 标的物品: ${jsonObj.item}\n· 账目数量: ${jsonObj.count} 支\n· 物权所属: 合伙人 ${jsonObj.owner}\n\n确认将其记录落盘并全网通告 A/B 端吗？`;
+        const dialog = `【AI 智能语义分析结果】\n输入内容："${originalText}"\n\n· 动作: ${jsonObj.action}\n· 物品: ${jsonObj.item}\n· 数量: ${jsonObj.count} 支\n· 归属: 合伙人 ${jsonObj.owner}\n\n确认将其写入数据库吗？`;
         
         if (confirm(dialog)) {
             if (jsonObj.action === "入库") {
                 let target = masterDatabase.stockLedger.find(s => s.spuName === jsonObj.item && s.owner === jsonObj.owner);
                 if (target) target.qty += jsonObj.count;
                 else masterDatabase.stockLedger.push({ spuName: jsonObj.item, owner: jsonObj.owner, qty: jsonObj.count });
-                masterDatabase.historicalLogs[0].records.unshift({ msg: `日常到货入库 (合伙人 ${jsonObj.owner} 采买的 ${jsonObj.item})`, clock: "刚刚", marker: `+${jsonObj.count} 支`, css: "var(--c-success)" });
+                masterDatabase.historicalLogs[0].records.unshift({ msg: `日常入库 (${jsonObj.owner} 采买 ${jsonObj.item})`, clock: "刚刚", marker: `+${jsonObj.count} 支`, css: "var(--c-success)" });
             } 
             else if (jsonObj.action === "消耗") {
                 let target = masterDatabase.stockLedger.find(s => s.spuName === jsonObj.item && s.owner === jsonObj.owner);
                 if (target) target.qty = Math.max(0, target.qty - jsonObj.count);
-                masterDatabase.historicalLogs[0].records.unshift({ msg: `日常消耗过账 (${jsonObj.owner} 专属顾客${jsonObj.customer === '无' ? '匿名客户' : jsonObj.customer})`, clock: "刚刚", marker: `-${jsonObj.count} 支`, css: "var(--text-sub)" });
+                masterDatabase.historicalLogs[0].records.unshift({ msg: `AI识别消耗 (${jsonObj.owner} 顾客使用)`, clock: "刚刚", marker: `-${jsonObj.count} 支`, css: "var(--text-sub)" });
             }
             else if (jsonObj.action === "借调") {
                 let borrower = jsonObj.owner === 'A' ? 'B' : 'A';
@@ -548,21 +647,20 @@
                 let targetLender = masterDatabase.stockLedger.find(s => s.spuName === jsonObj.item && s.owner === lender);
                 if (targetLender) targetLender.qty = Math.max(0, targetLender.qty - jsonObj.count);
                 masterDatabase.borrowLedger.push({ id: Date.now(), debtor: borrower, creditor: lender, item: jsonObj.item, qty: jsonObj.count, timestamp: "刚刚" });
-                masterDatabase.historicalLogs[0].records.unshift({ msg: `跨账户借调发生 (${borrower} 借用 ${lender} 物资：${jsonObj.item})`, clock: "刚刚", marker: "借调发生", css: "var(--c-danger)" });
+                masterDatabase.historicalLogs[0].records.unshift({ msg: `跨账户借调 (${borrower} 借用 ${lender}：${jsonObj.item})`, clock: "刚刚", marker: "借调发生", css: "var(--c-danger)" });
             }
             switchLayoutToDashboard(runtimeState.activeRoleCode);
-            alert("全盘实物账目流转确权成功！");
+            alert("AI流转确权成功！");
         }
     }
 
-    // --- F. 通用弹窗交互 ---
+    // --- F. 通用交互 ---
     function toggleBottomSheet(id, show) {
         const backdrop = document.getElementById('globalBackdrop');
         const sheet = document.getElementById(id);
         if (show) { backdrop.classList.add('active'); sheet.classList.add('active'); } 
         else { sheet.classList.remove('active'); }
     }
-
     function dismissAllSheets() {
         document.getElementById('globalBackdrop').classList.remove('active');
         document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('active'));
