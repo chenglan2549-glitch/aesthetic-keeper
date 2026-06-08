@@ -473,23 +473,29 @@
 
     async function saveCloudDatabase() {
         persistLocalDatabase();
-        if (!cloudReady || !cloudDb) {
+        if (!cloudReady || !cloudApp) {
             updateCloudSyncStatus('云端：未连接，本机已保存', true);
             return false;
         }
         try {
             updateCloudSyncStatus('云端：保存中...');
             const safeData = JSON.parse(JSON.stringify(masterDatabase));
-            await cloudDb.collection(CLOUD_COLLECTION).doc(CLOUD_DOC_ID).update({
-                data: safeData,
-                updatedAt: new Date().toISOString()
+            const res = await cloudApp.callFunction({
+                name: 'saveAppState',
+                data: { data: safeData }
             });
+
+            const result = res && (res.result || res);
+            if (result && result.success === false) {
+                throw new Error(result.message || '云函数返回失败');
+            }
+
             updateCloudSyncStatus('云端：已保存');
             return true;
         } catch (err) {
-            console.error('云端数据保存失败：', err);
+            console.error('云函数保存失败：', err);
             updateCloudSyncStatus('云端：保存失败', true);
-            alert('云端保存失败。大概率是 app_state 权限不允许当前网页修改这条数据。\n\n请先继续看本机效果；如果要三个人同步，需要把集合权限放开，或改用云函数写入。');
+            alert('云端保存失败。请检查 saveAppState 云函数是否部署成功，以及函数名是否为 saveAppState。');
             return false;
         }
     }
