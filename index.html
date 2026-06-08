@@ -661,7 +661,7 @@
             let rowHtml = `<div class="nested-spu-block"><div class="spu-master-row" onclick="toggleSpuCollapseRow(this, ${idx})"><div class="spu-title" id="spuTitleNode-${idx}"><i>▶</i> ${spuName}</div><div class="spu-qty">${dataObj.total} 支</div></div><div class="sku-slave-box" id="spuSlaveNode-${idx}">`;
             
             dataObj.breakdown.forEach(sub => {
-                const editButton = role === 'C' ? `<button class="inline-edit-btn" onclick="openInventoryEdit('${encodeURIComponent(sub.spuName)}','${sub.owner}')">修改</button>` : "";
+                const editButton = (role === 'C' || sub.owner === role) ? `<button class="inline-edit-btn" onclick="openInventoryEdit('${encodeURIComponent(sub.spuName)}','${sub.owner}')">修改</button>` : "";
                 rowHtml += `<div class="sku-item-line"><span>物权人：<span class="owner-lbl-${sub.owner.toLowerCase()}">合伙人 ${sub.owner}</span></span><span style="display:flex;align-items:center;gap:8px;"><span class="spu-qty">${sub.qty} 支</span>${editButton}</span></div>`;
             });
             rowHtml += `</div></div>`;
@@ -710,12 +710,16 @@
 
     function openInventoryEdit(encodedItem, owner) {
         const itemName = decodeURIComponent(encodedItem);
+        if (runtimeState.activeRoleCode !== 'C' && owner !== runtimeState.activeRoleCode) {
+            return alert('只能修改自己名下的库存记录');
+        }
         const target = masterDatabase.stockLedger.find(s => s.spuName === itemName && s.owner === owner);
         if (!target) return alert('未找到这条资产记录');
         document.getElementById('editStockOriginalItem').value = itemName;
         document.getElementById('editStockOriginalOwner').value = owner;
         document.getElementById('editStockItem').value = target.spuName;
         document.getElementById('editStockOwner').value = target.owner;
+        document.getElementById('editStockOwner').disabled = runtimeState.activeRoleCode !== 'C';
         document.getElementById('editStockQty').value = target.qty;
         toggleBottomSheet('inventoryEditSheet', true);
     }
@@ -724,10 +728,12 @@
         const oldItem = document.getElementById('editStockOriginalItem').value;
         const oldOwner = document.getElementById('editStockOriginalOwner').value;
         const newItem = document.getElementById('editStockItem').value.trim();
-        const newOwner = document.getElementById('editStockOwner').value;
+        let newOwner = document.getElementById('editStockOwner').value;
         const newQty = parseInt(document.getElementById('editStockQty').value);
+        if (runtimeState.activeRoleCode !== 'C') newOwner = oldOwner;
         if (!newItem || isNaN(newQty) || newQty < 0) return alert('请填写有效的物品名称和数量');
 
+        if (runtimeState.activeRoleCode !== 'C' && oldOwner !== runtimeState.activeRoleCode) return alert('只能修改自己名下的库存记录');
         const target = masterDatabase.stockLedger.find(s => s.spuName === oldItem && s.owner === oldOwner);
         if (!target) return alert('原资产记录不存在');
 
@@ -744,6 +750,7 @@
     async function deleteInventoryLine() {
         const oldItem = document.getElementById('editStockOriginalItem').value;
         const oldOwner = document.getElementById('editStockOriginalOwner').value;
+        if (runtimeState.activeRoleCode !== 'C' && oldOwner !== runtimeState.activeRoleCode) return alert('只能删除自己名下的库存记录');
         if (!confirm('确认删除这条资产记录吗？')) return;
         masterDatabase.stockLedger = masterDatabase.stockLedger.filter(s => !(s.spuName === oldItem && s.owner === oldOwner));
         ensureTodayLogGroup();
@@ -819,7 +826,14 @@
         const action = document.getElementById('formAction').value;
         const item = document.getElementById('formItem').value;
         const count = parseInt(document.getElementById('formCount').value);
-        const owner = document.getElementById('formOwner').value;
+        let owner = document.getElementById('formOwner').value;
+        if (runtimeState.activeRoleCode !== 'C') {
+            owner = runtimeState.activeRoleCode;
+            if (action === '借调') {
+                alert('A/B 合伙人端暂不允许直接登记借调；请由 C 端统一过账。');
+                return;
+            }
+        }
 
         if(!item || isNaN(count) || count < 0) {
             alert("请完整填写物品名称并确保数量有效！");
@@ -969,6 +983,15 @@
     function toggleBottomSheet(id, show) {
         const backdrop = document.getElementById('globalBackdrop');
         const sheet = document.getElementById(id);
+        if (show && id === 'manualFormSheet') {
+            const ownerSelect = document.getElementById('formOwner');
+            if (runtimeState.activeRoleCode !== 'C' && ownerSelect) {
+                ownerSelect.value = runtimeState.activeRoleCode;
+                ownerSelect.disabled = true;
+            } else if (ownerSelect) {
+                ownerSelect.disabled = false;
+            }
+        }
         if (show) { backdrop.classList.add('active'); sheet.classList.add('active'); } 
         else { sheet.classList.remove('active'); }
     }
