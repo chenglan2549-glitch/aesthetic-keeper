@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>医美耗材智管中台 - Aesthetic Keeper</title>
+    <style>
+        /* ==================== 1. 奢华裸色与毛玻璃全局视觉定义 ==================== */
+        :root {
+            --text-main: #3D2B1F;       
+            --text-sub: #8C7365;        
+            --accent: #A68A76;          
+            --glass-bg: rgba(255, 255, 255, 0.4); 
+            --glass-border: rgba(255, 255, 255, 0.55);
+            --sheet-bg: rgba(253, 251, 247, 0.98); 
+            --c-danger: #B76E66;        
+            --c-success: #6B8E7B;       
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Noto Serif SC', 'Songti SC', 'Source Han Serif SC', serif;
+            color: var(--text-main);
+            background-color: #F8F4EE; 
+            min-height: 100vh; overflow: hidden; position: relative;
+            touch-action: manipulation; -webkit-user-select: none; user-select: none;
+        }
+
+        body::after {
+            content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.035; pointer-events: none; z-index: 1;
+        }
+        .ambient-glow {
+            position: fixed; top: -10vh; left: -10vw; width: 80vw; height: 80vw;
+            background: radial-gradient(circle, #FFF2E1 0%, rgba(255,242,225,0) 70%);
+            filter: blur(60px); z-index: 0; pointer-events: none;
+        }
+
+        .view-stage {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; z-index: 5; box-sizing: border-box;
+            transition: opacity 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .hidden { opacity: 0; pointer-events: none; z-index: -1; display: none !important; }
+
+        /* ==================== 2. 身份选择与设备锁视图 ==================== */
+        #loginView { padding: 8vh 6vw 4vh 6vw; justify-content: center; }
+        .brand-header { margin-bottom: 5vh; text-align: left; }
+        .brand-header h1 { font-size: 28px; font-weight: 500; letter-spacing: 4px; margin: 0 0 6px 0; }
+        .brand-header p { font-size: 11px; color: var(--text-sub); letter-spacing: 3px; text-transform: uppercase; margin: 0; }
+
+        .card-stack { display: flex; flex-direction: column; gap: 3.5vh; }
+        .glass-card {
+            background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 24px; padding: 26px 24px;
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.25), 0 10px 30px rgba(61,43,31,0.03);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1); -webkit-tap-highlight-color: transparent; cursor: pointer;
+        }
+        .glass-card:active { transform: scale(0.96); background: rgba(255,255,255,0.5); }
+        .card-head { font-size: 18px; margin-bottom: 10px; display: flex; justify-content: space-between; font-weight: 600; letter-spacing: 1px;}
+        .card-body { font-size: 13px; color: var(--text-sub); line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, sans-serif;}
+        .badge { font-size: 10px; padding: 4px 10px; border-radius: 12px; background: rgba(61, 43, 31, 0.06); font-weight: normal; letter-spacing: 0; }
+
+        /* ==================== 3. 主体统一中台视图 ==================== */
+        .top-navbar { padding: 5vh 6vw 2vh 6vw; display: flex; justify-content: space-between; align-items: center; }
+        .user-profile { font-size: 22px; font-weight: 600; letter-spacing: 1px; }
+        .user-profile span { font-size: 12px; color: var(--text-sub); font-weight: normal; display: block; margin-top: 5px; letter-spacing: 1px;}
+        .top-actions { display: flex; gap: 12px; align-items: center; }
+        .icon-btn { font-size: 11px; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--accent); color: var(--text-main); background: transparent; cursor: pointer; font-family: inherit;}
+
+        .main-scroller { flex-grow: 1; padding: 0 6vw 12vh 6vw; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        
+        .dashboard-hero { background: var(--glass-bg); border-radius: 26px; padding: 26px; margin-top: 1.5vh; border: 1px solid var(--glass-border); box-shadow: inset 0 0 20px rgba(255,255,255,0.25);}
+        .dash-title { font-size: 12px; color: var(--text-sub); margin-bottom: 16px; letter-spacing: 1px; text-transform: uppercase;}
+        .dash-metrics { display: flex; justify-content: space-between; align-items: flex-end; }
+        .metric-block { display: flex; flex-direction: column; padding: 6px 12px; border-radius: 14px; transition: background 0.2s; cursor: pointer;}
+        .metric-block:active { background: rgba(61,43,31,0.05); }
+        .metric-value { font-size: 38px; font-weight: 600; font-family: -apple-system, sans-serif; line-height: 1; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;}
+        .metric-value sub { font-size: 14px; font-weight: normal; bottom: 0; color: var(--text-sub); opacity: 0.6;}
+        .metric-label { font-size: 11px; color: var(--text-sub); letter-spacing: 1px;}
+
+        .api-badge-bar { margin-top: 2vh; background: rgba(255,255,255,0.3); border-radius: 12px; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-sub); }
+        .api-badge-bar input { border: none; background: transparent; color: var(--text-main); text-align: right; font-family: monospace; width: 60%; outline: none;}
+
+        .action-pad { margin-top: 3vh; display: none; }
+        .btn-recording { width: 100%; background: var(--text-main); color: #FFF; border: none; border-radius: 18px; padding: 18px 0; font-size: 15px; font-family: inherit; letter-spacing: 2px; font-weight: 500; box-shadow: 0 10px 25px rgba(61, 43, 31, 0.15); transition: all 0.2s;}
+        .btn-recording:active { transform: scale(0.98); opacity: 0.9; }
+
+        .timeline-section { margin-top: 4vh; }
+        .timeline-day-title { font-size: 12px; color: var(--text-sub); font-weight: 600; margin-bottom: 14px; letter-spacing: 1px; display: flex; align-items: center;}
+        .timeline-day-title::after { content: ""; flex-grow: 1; height: 1px; background: rgba(140, 115, 101, 0.15); margin-left: 14px;}
+        
+        .log-row-card { background: rgba(255, 255, 255, 0.5); border-radius: 16px; padding: 16px 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 12px rgba(61,43,31,0.01);}
+        .log-main-info p { margin: 0 0 6px 0; font-size: 14px; font-weight: 500; letter-spacing: 0.5px;}
+        .log-main-info span { font-size: 11px; color: var(--text-sub); font-family: -apple-system, sans-serif; }
+        .log-badge-value { font-size: 16px; font-weight: 600; font-family: -apple-system, sans-serif; }
+
+        /* ==================== 4. 通用模态弹窗系统 (Bottom Sheet) ==================== */
+        .backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.35); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 99; opacity: 0; visibility: hidden; transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .backdrop.active { opacity: 1; visibility: visible; }
+        
+        .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100vw; max-height: 85vh; background: var(--sheet-bg); border-radius: 32px 32px 0 0; padding: 24px 6vw 42px 6vw; z-index: 100; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.15, 0.85, 0.35, 1); box-sizing: border-box; display: flex; flex-direction: column; box-shadow: 0 -10px 40px rgba(61,43,31,0.08);}
+        .bottom-sheet.active { transform: translateY(0); }
+        .sheet-indicator { width: 42px; height: 4px; border-radius: 2px; background: rgba(61, 43, 31, 0.15); margin: 0 auto 22px auto; }
+        .sheet-headline { font-size: 18px; margin-bottom: 22px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;}
+        .sheet-sub-count { color: var(--text-sub); font-weight: normal; font-size: 13px; }
+        .sheet-body-scroll { overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; }
+
+        .nested-spu-block { border-bottom: 1px solid rgba(61, 43, 31, 0.08); padding: 16px 0; }
+        .nested-spu-block:last-child { border-bottom: none; }
+        .spu-master-row { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .spu-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;}
+        .spu-title i { font-size: 11px; color: var(--text-sub); font-style: normal; transition: transform 0.2s;}
+        .spu-title.expanded i { transform: rotate(90deg); }
+        .spu-qty { font-size: 16px; font-family: -apple-system, sans-serif; font-weight: 600; }
+        
+        .sku-slave-box { background: rgba(61,43,31,0.03); border-radius: 12px; padding: 4px 14px; margin-top: 10px; display: none; flex-direction: column; }
+        .sku-slave-box.active { display: flex; }
+        .sku-item-line { display: flex; justify-content: space-between; padding: 10px 0; font-size: 13px; border-bottom: 1px dashed rgba(61,43,31,0.05); }
+        .sku-item-line:last-child { border-bottom: none; }
+        .owner-lbl-a { color: #5B7A58; font-weight: 500; }
+        .owner-lbl-b { color: #5B7288; font-weight: 500; }
+
+        .debt-row-card { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(61, 43, 31, 0.07); }
+        .debt-row-card:last-child { border-bottom: none; }
+        .debt-main-title { font-size: 14px; font-weight: 600; }
+        .debt-sub-info { font-size: 11px; color: var(--text-sub); margin-top: 4px; font-family: -apple-system, sans-serif;}
+        .debt-right-action { display: flex; align-items: center; gap: 10px; }
+        .btn-action-sm { background: var(--text-main); color: #FFF; border: none; padding: 6px 14px; border-radius: 10px; font-size: 11px; font-family: inherit; cursor: pointer;}
+        
+        .pin-container { display: flex; gap: 18px; margin: 10px auto 26px auto; }
+        .pin-bubble { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--text-main); transition: all 0.15s; }
+        .pin-bubble.filled { background: var(--text-main); }
+        .pin-bubble.shake-error { border-color: var(--c-danger); background: var(--c-danger); animation: anim-shake 0.4s; }
+        .numeric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 26px; width: 85%; max-width: 280px; margin: 0 auto; }
+        .num-key { height: 56px; border-radius: 28px; display: flex; justify-content: center; align-items: center; font-size: 22px; font-weight: 500; font-family: -apple-system, sans-serif; background: rgba(255,255,255,0.7); cursor: pointer; -webkit-tap-highlight-color: transparent;}
+        .num-key:active { background: rgba(140, 115, 101, 0.25); }
+        .num-key.meta-key { font-size: 14px; background: transparent; }
+
+        @keyframes anim-shake { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-6px); } 50% { transform: translateX(6px); } }
+    </style>
+</head>
+<body>
+
+<div class="ambient-glow"></div>
+
+<div id="loginView" class="view-stage">
+    <div class="brand-header">
+        <h1>身份确认</h1>
+        <p>Aesthetic Keeper · 秩序之美</p>
+    </div>
+    <div class="card-stack">
+        <div class="glass-card" onclick="triggerPinWorkflow('机构主理人 (C端)')">
+            <div class="card-head"><span>机构主理人 C</span><span class="badge">全局权控</span></div>
+            <div class="card-body">全面调度实物库存，拥有唯一的智能语音过账与对账裁决权。</div>
+        </div>
+        <div class="glass-card" onclick="triggerPinWorkflow('独立合伙人 A')">
+            <div class="card-head"><span>独立合伙人 A</span><span class="badge">数据隔离</span></div>
+            <div class="card-body">独立看板。查验自持药耗留存，发起与 B 端实时跨账户对账。</div>
+        </div>
+        <div class="glass-card" onclick="triggerPinWorkflow('独立合伙人 B')">
+            <div class="card-head"><span>独立合伙人 B</span><span class="badge">数据隔离</span></div>
+            <div class="card-body">独立看板。查验自持药耗留存，发起与 A 端实时跨账户对账。</div>
+        </div>
+    </div>
+    <div class="footer" style="position: absolute; bottom: 3vh; left: 0; width: 100vw; text-align: center; font-size: 11px; color: var(--text-sub); letter-spacing: 4px;">
+        秩序之美 · 了然于心
+    </div>
+</div>
+
+<div id="dashboardView" class="view-stage hidden">
+    <div class="top-navbar">
+        <div class="user-profile">
+            <div id="uiCurrentUserName">正在加载...</div>
+            <span id="uiCurrentUserTitle">专属智管中台</span>
+        </div>
+        <div class="top-actions">
+            <button class="icon-btn" onclick="executeLogout()">解除绑定</button>
+        </div>
+    </div>
+    
+    <div class="main-scroller">
+        <div class="dashboard-hero">
+            <div class="dash-title">实物资产与借贷轧差</div>
+            <div class="dash-metrics">
+                <div class="metric-block" onclick="toggleBottomSheet('inventorySheet', true)">
+                    <div class="metric-value"><span id="metricTotalStock">0</span><sub>支</sub></div>
+                    <div class="metric-label">资产总留存 🔍</div>
+                </div>
+                <div class="metric-block" style="text-align: right;" onclick="toggleBottomSheet('debtSheet', true)">
+                    <div class="metric-value highlight-debt"><span id="metricTotalDebts">0</span><sub>笔</sub></div>
+                    <div class="metric-label">待平账单 🔍</div>
+                </div>
+            </div>
+            <div class="api-badge-bar">
+                <span>DeepSeek 额度控制网关</span>
+                <input type="password" id="inputApiKey" placeholder="填入sk-秘钥(留空为模拟)" onchange="saveApiKeyToLocal(this.value)">
+            </div>
+        </div>
+
+        <div class="action-pad" id="adminVoiceConsole">
+            <button class="btn-recording" id="btnMicTrigger" onclick="toggleVoiceEngine()">🎙️ 点击说话并自动流水过账</button>
+        </div>
+
+        <div id="timelineLogsWrapper"></div>
+    </div>
+</div>
+
+<div class="backdrop" id="globalBackdrop" onclick="dismissAllSheets()"></div>
+
+<div class="bottom-sheet" id="pinKeyboardSheet">
+    <div class="sheet-indicator"></div>
+    <div class="sheet-headline"><span id="pinKeyboardTitle">安全授权</span></div>
+    <div class="pin-container">
+        <div class="pin-bubble"></div><div class="pin-bubble"></div><div class="pin-bubble"></div><div class="pin-bubble"></div>
+    </div>
+    <div class="numeric-grid">
+        <div class="num-key" onclick="inputNumKey(1)">1</div><div class="num-key" onclick="inputNumKey(2)">2</div><div class="num-key" onclick="inputNumKey(3)">3</div>
+        <div class="num-key" onclick="inputNumKey(4)">4</div><div class="num-key" onclick="inputNumKey(5)">5</div><div class="num-key" onclick="inputNumKey(6)">6</div>
+        <div class="num-key" onclick="inputNumKey(7)">7</div><div class="num-key" onclick="inputNumKey(8)">8</div><div class="num-key" onclick="inputNumKey(9)">9</div>
+        <div class="num-key meta-key" onclick="dismissAllSheets()">取消</div><div class="num-key" onclick="inputNumKey(0)">0</div><div class="num-key meta-key" onclick="backspaceNumKey()">退格</div>
+    </div>
+</div>
+
+<div class="bottom-sheet" id="inventorySheet">
+    <div class="sheet-indicator"></div>
+    <div class="sheet-headline"><span>全量资产分布清单</span><span class="sheet-sub-count" id="lblInventoryCount">共 0 项</span></div>
+    <div class="sheet-body-scroll" id="boxInventoryDetails"></div>
+</div>
+
+<div class="bottom-sheet" id="debtSheet">
+    <div class="sheet-indicator"></div>
+    <div class="sheet-headline"><span>借调与平账核心台账</span><span class="sheet-sub-count" id="lblDebtCount">共 0 笔</span></div>
+    <div class="sheet-body-scroll" id="boxDebtDetails"></div>
+</div>
+
+<script>
+    // --- A. 基础数据库结构 ---
+    let masterDatabase = {
+        stockLedger: [
+            { spuName: "保妥适肉毒 (100u)", owner: "A", qty: 20 },
+            { spuName: "保妥适肉毒 (100u)", owner: "B", qty: 25 },
+            { spuName: "瑞蓝2号玻尿酸", owner: "B", qty: 120 },
+            { spuName: "嗨体1.5ml植物水光", owner: "A", qty: 80 },
+            { spuName: "乔雅登丰颜升级版", owner: "B", qty: 113 }
+        ],
+        borrowLedger: [
+            { id: 101, debtor: "B", creditor: "A", item: "保妥适肉毒 (100u)", qty: 2, timestamp: "06-08 14:00" },
+            { id: 102, debtor: "A", creditor: "B", item: "乔雅登丰颜升级版", qty: 1, timestamp: "06-07 09:30" }
+        ],
+        historicalLogs: [
+            {
+                dateGroup: "2026年06月08日 (今日)",
+                records: [
+                    { msg: "合伙人 B 借用 A 物资 (保妥适肉毒)", clock: "14:00", marker: "借调发生", css: "var(--c-danger)" },
+                    { msg: "日常消耗过账 (A 专属顾客张女士)", clock: "10:30", marker: "-1 支", css: "var(--text-sub)" }
+                ]
+            },
+            {
+                dateGroup: "2026年06月07日 (昨日)",
+                records: [
+                    { msg: "到货扫码确认 (B 采买瑞蓝2号入库)", clock: "16:00", marker: "+50 支", css: "var(--c-success)" },
+                    { msg: "合伙人 A 借用 B 物资 (乔雅登丰颜)", clock: "09:30", marker: "借调发生", css: "var(--c-danger)" }
+                ]
+            }
+        ]
+    };
+
+    let runtimeState = { activeRoleCode: null, targetWorkflowRole: null, accumulatedPin: "", speechEngine: null };
+
+    // --- B. 设备锁状态感知 ---
+    window.addEventListener('DOMContentLoaded', () => {
+        const cachedRole = localStorage.getItem('__bound_role_code');
+        const cachedKey = localStorage.getItem('__deepseek_encrypted_key');
+        if(cachedKey) document.getElementById('inputApiKey').value = cachedKey;
+
+        if (cachedRole) {
+            runtimeState.activeRoleCode = cachedRole;
+            switchLayoutToDashboard(cachedRole);
+        } else {
+            document.getElementById('loginView').classList.remove('hidden');
+        }
+    });
+
+    function triggerPinWorkflow(roleDisplayName) {
+        runtimeState.targetWorkflowRole = roleDisplayName;
+        runtimeState.accumulatedPin = "";
+        refreshPinBubbles();
+        document.getElementById('pinKeyboardTitle').innerText = "验证 " + roleDisplayName;
+        toggleBottomSheet('pinKeyboardSheet', true);
+    }
+
+    function inputNumKey(digital) {
+        if(runtimeState.accumulatedPin.length < 4) {
+            runtimeState.accumulatedPin += digital.toString();
+            refreshPinBubbles();
+            if(runtimeState.accumulatedPin.length === 4) setTimeout(evaluateAuthorizationPin, 150);
+        }
+    }
+
+    function backspaceNumKey() {
+        if(runtimeState.accumulatedPin.length > 0) {
+            runtimeState.accumulatedPin = runtimeState.accumulatedPin.slice(0, -1);
+            refreshPinBubbles();
+        }
+    }
+
+    function refreshPinBubbles() {
+        const bubbles = document.querySelectorAll('.pin-bubble');
+        bubbles.forEach((b, i) => {
+            b.classList.remove('shake-error');
+            i < runtimeState.accumulatedPin.length ? b.classList.add('filled') : b.classList.remove('filled');
+        });
+    }
+
+    function evaluateAuthorizationPin() {
+        let matchedCode = null;
+        const pin = runtimeState.accumulatedPin;
+        const target = runtimeState.targetWorkflowRole;
+
+        if (target.includes("合伙人 A") && pin === "1111") matchedCode = 'A';
+        else if (target.includes("合伙人 B") && pin === "2222") matchedCode = 'B';
+        else if (target.includes("机构主理人") && pin === "3333") matchedCode = 'C';
+
+        if (matchedCode) {
+            localStorage.setItem('__bound_role_code', matchedCode);
+            runtimeState.activeRoleCode = matchedCode;
+            dismissAllSheets();
+            setTimeout(() => {
+                document.getElementById('loginView').classList.add('hidden');
+                switchLayoutToDashboard(matchedCode);
+            }, 300);
+        } else {
+            const bubbles = document.querySelectorAll('.pin-bubble');
+            bubbles.forEach(b => b.classList.add('shake-error'));
+            setTimeout(() => { runtimeState.accumulatedPin = ""; refreshPinBubbles(); }, 500);
+        }
+    }
+
+    function executeLogout() {
+        localStorage.removeItem('__bound_role_code');
+        runtimeState.activeRoleCode = null;
+        document.getElementById('dashboardView').classList.add('hidden');
+        document.getElementById('loginView').classList.remove('hidden');
+    }
+
+    function saveApiKeyToLocal(val) { localStorage.setItem('__deepseek_encrypted_key', val); }
+
+    // --- C. 千人千面数据渲染 ---
+    function switchLayoutToDashboard(role) {
+        const dashView = document.getElementById('dashboardView');
+        dashView.classList.remove('hidden');
+
+        if (role === 'C') {
+            document.getElementById('uiCurrentUserName').innerText = "机构主理人 C";
+            document.getElementById('uiCurrentUserTitle').innerText = "全盘战略管控网关";
+            document.getElementById('adminVoiceConsole').style.display = 'block';
+        } else {
+            document.getElementById('uiCurrentUserName').innerText = "独立合伙人 " + role;
+            document.getElementById('uiCurrentUserTitle').innerText = "隔离合伙人专属看板";
+            document.getElementById('adminVoiceConsole').style.display = 'none';
+        }
+
+        let viewFilteredStockTotal = 0;
+        masterDatabase.stockLedger.forEach(item => { if (role === 'C' || item.owner === role) viewFilteredStockTotal += item.qty; });
+
+        let viewFilteredDebtsCount = 0;
+        masterDatabase.borrowLedger.forEach(debt => { if (role === 'C' || debt.debtor === role || debt.creditor === role) viewFilteredDebtsCount++; });
+
+        document.getElementById('metricTotalStock').innerText = viewFilteredStockTotal;
+        document.getElementById('metricTotalDebts').innerText = viewFilteredDebtsCount;
+
+        renderTimelineLogs(role);
+        buildInventoryDrilldownDOM(role);
+        buildDebtActionDOM(role);
+    }
+
+    function renderTimelineLogs(role) {
+        const wrapper = document.getElementById('timelineLogsWrapper');
+        wrapper.innerHTML = "";
+
+        masterDatabase.historicalLogs.forEach(dayGroup => {
+            let accessibleRecords = dayGroup.records.filter(rec => {
+                if(role === 'C') return true;
+                if(role === 'A' && rec.msg.includes("B 专属")) return false;
+                if(role === 'B' && rec.msg.includes("A 专属")) return false;
+                return true;
+            });
+
+            if(accessibleRecords.length === 0) return;
+
+            let blockHtml = `<div class="timeline-section"><div class="timeline-day-title">${dayGroup.dateGroup}</div>`;
+            accessibleRecords.forEach(rec => {
+                blockHtml += `<div class="log-row-card"><div class="log-main-info"><p>${rec.msg}</p><span>${rec.clock}</span></div><div class="log-badge-value" style="color:${rec.css}">${rec.marker}</div></div>`;
+            });
+            blockHtml += `</div>`;
+            wrapper.innerHTML += blockHtml;
+        });
+    }
+
+    // --- D. 数据下钻（Drill-down） ---
+    function buildInventoryDrilldownDOM(role) {
+        const box = document.getElementById('boxInventoryDetails');
+        box.innerHTML = "";
+        let spuMap = {};
+        
+        masterDatabase.stockLedger.forEach(item => {
+            if (role === 'C' || item.owner === role) {
+                if (!spuMap[item.spuName]) spuMap[item.spuName] = { total: 0, breakdown: [] };
+                spuMap[item.spuName].total += item.qty;
+                spuMap[item.spuName].breakdown.push(item);
+            }
+        });
+
+        const spuKeys = Object.keys(spuMap);
+        document.getElementById('lblInventoryCount').innerText = `共 ${spuKeys.length} 个品类`;
+
+        spuKeys.forEach((spuName, idx) => {
+            const dataObj = spuMap[spuName];
+            let rowHtml = `<div class="nested-spu-block"><div class="spu-master-row" onclick="toggleSpuCollapseRow(this, ${idx})"><div class="spu-title" id="spuTitleNode-${idx}"><i>▶</i> ${spuName}</div><div class="spu-qty">${dataObj.total} 支</div></div><div class="sku-slave-box" id="spuSlaveNode-${idx}">`;
+            
+            dataObj.breakdown.forEach(sub => {
+                rowHtml += `<div class="sku-item-line"><span>物权人：<span class="owner-lbl-${sub.owner.toLowerCase()}">合伙人 ${sub.owner}</span></span><span class="spu-qty">${sub.qty} 支</span></div>`;
+            });
+            rowHtml += `</div></div>`;
+            box.innerHTML += rowHtml;
+        });
+    }
+
+    function toggleSpuCollapseRow(element, index) {
+        const titleNode = document.getElementById(`spuTitleNode-${index}`);
+        const slaveBox = document.getElementById(`spuSlaveNode-${index}`);
+        if(slaveBox.classList.contains('active')) { titleNode.classList.remove('expanded'); slaveBox.classList.remove('active'); } 
+        else { titleNode.classList.add('expanded'); slaveBox.classList.add('active'); }
+    }
+
+    function buildDebtActionDOM(role) {
+        const box = document.getElementById('boxDebtDetails');
+        box.innerHTML = "";
+        let accessibleDebts = masterDatabase.borrowLedger.filter(d => { return role === 'C' || d.debtor === role || d.creditor === role; });
+        document.getElementById('lblDebtCount').innerText = `共 ${accessibleDebts.length} 笔挂账`;
+
+        accessibleDebts.forEach(debt => {
+            let actionBtnHtml = (role === 'C') ? `<button class="btn-primary btn-action-sm" style="background:var(--c-success)" onclick="executeClearDebtWorkflow(${debt.id})">确认核销平账</button>` : `<button class="btn-primary btn-action-sm" onclick="alert('对账申请已通过站内信红点上报主理人C，等待主理人最终点击平账确认。')">发起平账</button>`;
+            box.innerHTML += `<div class="debt-row-card"><div><div class="debt-main-title">${debt.debtor} <span style="color:var(--c-danger);margin:0 2px;">欠</span> ${debt.creditor}</div><div class="debt-sub-info">${debt.timestamp} · 借调物资：${debt.item}</div></div><div class="debt-right-action"><span class="spu-qty" style="color:var(--c-danger)">${debt.qty}支</span>${actionBtnHtml}</div></div>`;
+        });
+    }
+
+    function executeClearDebtWorkflow(debtId) {
+        if (confirm("您在现实中已确认该两名合伙人完成资产/现金交割，准许核销平账吗？")) {
+            masterDatabase.borrowLedger = masterDatabase.borrowLedger.filter(d => d.id !== debtId);
+            masterDatabase.historicalLogs[0].records.unshift({ msg: "主理人 C 点击确权核销了一笔跨账户借调账目", clock: "刚刚", marker: "账目平反", css: "var(--c-success)" });
+            dismissAllSheets();
+            switchLayoutToDashboard(runtimeState.activeRoleCode);
+        }
+    }
+
+    // --- E. 原生ASR语音识别 + DeepSeek API ---
+    function toggleVoiceEngine() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("当前设备环境不支持原生语音API，为您切入【快捷智能模拟解析流】");
+            triggerMockSpeechWorkflow();
+            return;
+        }
+
+        const btn = document.getElementById('btnMicTrigger');
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'zh-CN';
+        recognition.interimResults = false;
+
+        recognition.onstart = () => { btn.innerText = "🔊 正在聆听录音中，请口述操作..."; btn.style.background = "var(--c-danger)"; };
+        recognition.onerror = (e) => { console.error(e); alert("麦克风捕获异常，自动降级至模拟解析"); triggerMockSpeechWorkflow(); };
+        recognition.onspeechend = () => { recognition.stop(); btn.innerText = "⏳ 录音捕获完成，AI正在语义识别过账..."; btn.style.background = "var(--accent)"; };
+
+        recognition.onresult = async (event) => {
+            const speechText = event.results[0][0].transcript;
+            await processSemanticParsing(speechText);
+        };
+        recognition.start();
+    }
+
+    async function triggerMockSpeechWorkflow() {
+        const mockPhrases = ["快递过来了是B的药增加了50支瑞蓝玻尿酸", "今天A的顾客来了用了一支A自己的水光针", "今天B来了没货拿了A的一支肉毒"];
+        const selectedText = prompt("模拟录入输入（或直接按确定体验预设大白话）：", mockPhrases[Math.floor(Math.random() * mockPhrases.length)]);
+        if(selectedText) { await processSemanticParsing(selectedText); } else { resetMicBtnUi(); }
+    }
+
+    function resetMicBtnUi() {
+        const btn = document.getElementById('btnMicTrigger');
+        btn.innerText = "🎙️ 点击说话并自动流水过账";
+        btn.style.background = "var(--text-main)";
+    }
+
+    async function processSemanticParsing(rawText) {
+        const apiKey = localStorage.getItem('__deepseek_encrypted_key');
+        const systemRule = `你是一个专业的医疗美容耗材IMS系统的语义结构化提取网关。请将大白话转换为规范格式。输出必须严格为单行 JSON 对象，绝不允许包裹 markdown 语法。包含字段：{"customer":"姓名/无", "action":"入库/消耗/借调", "item":"标准耗材名", "count":正整数, "owner":"A/B/C/无"}`;
+
+        let parsedJson = null;
+
+        if (apiKey && apiKey.startsWith("sk-")) {
+            try {
+                const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+                    method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+                    body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "system", content: systemRule }, { role: "user", content: rawText }], temperature: 0.1, response_format: { type: "json_object" } })
+                });
+                const resData = await response.json();
+                parsedJson = JSON.parse(resData.choices[0].message.content);
+            } catch (err) { console.error("DeepSeek调用失败", err); }
+        }
+
+        if (!parsedJson) {
+            parsedJson = { customer: "无", action: "消耗", item: "未定品类", count: 1, owner: "无" };
+            if (rawText.includes("增加") || rawText.includes("入库") || rawText.includes("快递")) parsedJson.action = "入库";
+            else if (rawText.includes("借") || rawText.includes("拿了")) parsedJson.action = "借调";
+            if (rawText.includes("A")) parsedJson.owner = "A";
+            if (rawText.includes("B")) parsedJson.owner = "B";
+            if (rawText.includes("瑞蓝")) parsedJson.item = "瑞蓝2号玻尿酸";
+            else if (rawText.includes("肉毒") || rawText.includes("保妥适")) parsedJson.item = "保妥适肉毒 (100u)";
+            else if (rawText.includes("水光") || rawText.includes("嗨体")) parsedJson.item = "嗨体1.5ml植物水光";
+            let numMatch = rawText.match(/\d+/);
+            if(numMatch) parsedJson.count = parseInt(numMatch[0]);
+        }
+
+        resetMicBtnUi();
+        executeLedgerCommitWorkflow(parsedJson, rawText); // FIX: 修复了致命空格错误
+    }
+
+    function executeLedgerCommitWorkflow(jsonObj, originalText) {
+        const dialog = `【AI 智能语义对账网关判定】\n原始音频："${originalText}"\n\n提取分类要素：\n· 操作动作: ${jsonObj.action}\n· 标的物品: ${jsonObj.item}\n· 账目数量: ${jsonObj.count} 支\n· 物权所属: 合伙人 ${jsonObj.owner}\n\n确认将其记录落盘并全网通告 A/B 端吗？`;
+        
+        if (confirm(dialog)) {
+            if (jsonObj.action === "入库") {
+                let target = masterDatabase.stockLedger.find(s => s.spuName === jsonObj.item && s.owner === jsonObj.owner);
+                if (target) target.qty += jsonObj.count;
+                else masterDatabase.stockLedger.push({ spuName: jsonObj.item, owner: jsonObj.owner, qty: jsonObj.count });
+                masterDatabase.historicalLogs[0].records.unshift({ msg: `日常到货入库 (合伙人 ${jsonObj.owner} 采买的 ${jsonObj.item})`, clock: "刚刚", marker: `+${jsonObj.count} 支`, css: "var(--c-success)" });
+            } 
+            else if (jsonObj.action === "消耗") {
+                let target = masterDatabase.stockLedger.find(s => s.spuName === jsonObj.item && s.owner === jsonObj.owner);
+                if (target) target.qty = Math.max(0, target.qty - jsonObj.count);
+                masterDatabase.historicalLogs[0].records.unshift({ msg: `日常消耗过账 (${jsonObj.owner} 专属顾客${jsonObj.customer === '无' ? '匿名客户' : jsonObj.customer})`, clock: "刚刚", marker: `-${jsonObj.count} 支`, css: "var(--text-sub)" });
+            }
+            else if (jsonObj.action === "借调") {
+                let borrower = jsonObj.owner === 'A' ? 'B' : 'A';
+                let lender = jsonObj.owner;
+                let targetLender = masterDatabase.stockLedger.find(s => s.spuName === jsonObj.item && s.owner === lender);
+                if (targetLender) targetLender.qty = Math.max(0, targetLender.qty - jsonObj.count);
+                masterDatabase.borrowLedger.push({ id: Date.now(), debtor: borrower, creditor: lender, item: jsonObj.item, qty: jsonObj.count, timestamp: "刚刚" });
+                masterDatabase.historicalLogs[0].records.unshift({ msg: `跨账户借调发生 (${borrower} 借用 ${lender} 物资：${jsonObj.item})`, clock: "刚刚", marker: "借调发生", css: "var(--c-danger)" });
+            }
+            switchLayoutToDashboard(runtimeState.activeRoleCode);
+            alert("全盘实物账目流转确权成功！");
+        }
+    }
+
+    // --- F. 通用弹窗交互 ---
+    function toggleBottomSheet(id, show) {
+        const backdrop = document.getElementById('globalBackdrop');
+        const sheet = document.getElementById(id);
+        if (show) { backdrop.classList.add('active'); sheet.classList.add('active'); } 
+        else { sheet.classList.remove('active'); }
+    }
+
+    function dismissAllSheets() {
+        document.getElementById('globalBackdrop').classList.remove('active');
+        document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('active'));
+    }
+</script>
+</body>
+</html>
